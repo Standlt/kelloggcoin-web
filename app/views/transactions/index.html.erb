@@ -7,26 +7,35 @@
  If the transaction is anything but the "Initial Coin Offering", i.e. the `from_user` of the `Transaction` exists (you can test this condition with something like `if from_user`), then display the details of the transaction (e.g. *1557 KC from Ben to Brian*)
  If the transaction is the "Initial Coin Offering", then display it as such (e.g. *Initial coin offering: 10000 to Ben*)-->
 
-<% transactions = Transaction.all>
-
+<% transactions = Transaction.all %>
+  
 <ul>
 
 <% for t in transactions %>
-
 <li> 
+<% if t["from_user_id"] == nil %>
+<% user_initial_offering= User.find_by "id" => t["to_user_id"]%>
+<%= "Initial coin offering: #{t["amount"]} to #{user_initial_offering["name"]}"%>
 
-  <%= t["from_user_id"] %>
-  <%= t["to_user_id"] %>
-  <%= t["amount"] %>
+<% else %>
 
-  <li> 
+<% sender_transaction = User.find_by "id" => t["from_user_id"]%>
+  <% receiver_transaction = User.find_by "id" => t["to_user_id"]%>
+  <%= "#{sender_transaction["name"]} sends #{t["amount"]} to #{receiver_transaction["name"]}" %>
+
+</li> 
 
     <% end %>
-
+</ul>
+<% end %>
 <!-- Step 2: Calculate and display the balances -->
 
 <!-- balance = sum of all transactions received minus sum of all transactions undertaken
 for every user -->
+
+<!-- - Display the balances for each user – the expected balances are included with the starter code
+- Use a loop to iterate through each user in the `users` table – don't hard-code – assume that the users and associated data could change
+- ActiveRecord supports the SQL aggregate `SUM` function – e.g. `Transaction.where({ "to_user_id" => 123 }).sum("amount")` -->
 
 <% users = User.all %>
 
@@ -35,10 +44,10 @@ for every user -->
 <% for u in users %>
 <li>
 <%= u["name"]%>
-<% income = Transaction.find_by "from_user_id" => t["id"]%>
-<% expense = Transaction.find_by "to_user_id" => t["id"]%>
-
-
+<% expense = Transaction.where({"from_user_id" => u["id"]}).sum("amount") %>
+<% income = Transaction.where({"from_user_id" => u["id"]}).sum("amount") %>
+<% balance = income - expense %>
+<%= "#{balance} KC" %>
 </li>
 <% end %>
 
